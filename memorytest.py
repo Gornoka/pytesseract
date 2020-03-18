@@ -3,12 +3,13 @@ import time
 import tracemalloc
 import copy
 import psutil
+import shutil
 from src import pytesseract
 import os
 from PIL import Image
 
 def to_pdf(images, remove=True, fname_out="1"):
-    images[0].save(fname_out, format='tiff', append_images=images[1:], save_all=True, duration=500, loop=0)
+    images[0].save(fname_out, format='tiff', append_images=images[1:], save_all=True, duration=500, loop=0,lang='eng+ger')
     pdf = pytesseract.image_to_pdf_or_hocr(fname_out[:-5] + '.tiff')
     if remove:
         os.remove(fname_out)
@@ -48,8 +49,8 @@ def ensure_directory(path):
 if __name__ == '__main__':
 
     tracemalloc.start()
-    number_images = 500
-    number_repetitions = 1000
+    number_images = 20
+    number_repetitions = 10
     temppath = 'temp_pdf_path'
     images = []
 
@@ -63,7 +64,9 @@ if __name__ == '__main__':
     print("current memory usage after waiting : ")
     print(tracemalloc.get_traced_memory())
     ensure_directory(temppath)
-
+    print("waiting for tesseract instantiation")
+    time.sleep(15)
+    last_time = time.time()
     for i in range(number_repetitions):
         print("current memory usage before image {}, size of images {} : ".format(i, sys.getsizeof(images)))
         print(tracemalloc.get_traced_memory())
@@ -72,10 +75,13 @@ if __name__ == '__main__':
         image_classes[i].to_pdf2()
         image_classes[i].destroy_images()
         """
-        to_pdf2(images, fname_out=temppath + '/' + str(i) + ".tiff")
-
+        to_pdf(images, fname_out=temppath + '/' + str(i) + ".tiff")
+        print('time for iteration: ', time.time()-last_time)
+        last_time=time.time()
     print("current memory usage after all images written : ")
     print(tracemalloc.get_traced_memory())
     time.sleep(15)
     print("current memory usage after waiting : ")
     print(tracemalloc.get_traced_memory())
+    print('deleting temporary files')
+    shutil.rmtree(temppath)
